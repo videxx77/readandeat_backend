@@ -1,6 +1,8 @@
 package at.readandeat_backend_v2.db.controller;
 
 import at.readandeat_backend_v2.db.models.Customer;
+import at.readandeat_backend_v2.db.models.Product;
+import at.readandeat_backend_v2.db.models.User;
 import at.readandeat_backend_v2.db.payload.request.CustomerRequest;
 import at.readandeat_backend_v2.db.payload.request.SignupRequest;
 import at.readandeat_backend_v2.db.payload.response.MessageResponse;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.PostUpdate;
 import javax.validation.Valid;
+import java.io.FileNotFoundException;
 import java.util.List;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -31,7 +34,7 @@ public class CustomerController
 
     @PostMapping(path = "/add")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> addCustomers(Authentication auth, @Valid @RequestBody CustomerRequest customerRequest) {
+    public ResponseEntity<?> addCustomer(Authentication auth, @Valid @RequestBody CustomerRequest customerRequest) {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
                 .getPrincipal();
 
@@ -50,16 +53,24 @@ public class CustomerController
         return ResponseEntity.ok(new MessageResponse("Customer registered successfully!"));
     }
 
-
     @DeleteMapping(path = "/delete")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> raiseFounds(Authentication auth, @RequestParam(name = "id") long id) {
+    public ResponseEntity<?> deleteCustomer(Authentication auth, @RequestParam(name = "id") long id) {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
                 .getPrincipal();
 
-        Customer customer = this.getCostumerById(id);
+        Customer customer;
+        try
+        {
+            customer = this.getCostumerById(id);
+        } catch (FileNotFoundException fileNotFoundException)
+        {
+            return ResponseEntity
+                    .badRequest()
+                    .body(new MessageResponse("Error: No customer with this id for this user"));
+        }
 
-        customerRepository.deleteByCustomerIDAndUser(id, userRepository.findByUserID(userDetails.getUserID()).orElse(null));
+        customerRepository.delete(customer);
 
         return ResponseEntity.ok(new MessageResponse("Customer "+
                 customer.getFirstName() +
@@ -74,7 +85,16 @@ public class CustomerController
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
                 .getPrincipal();
 
-        Customer customer = this.getCostumerById(id);
+        Customer customer;
+        try
+        {
+            customer = this.getCostumerById(id);
+        } catch (FileNotFoundException fileNotFoundException)
+        {
+            return ResponseEntity
+                    .badRequest()
+                    .body(new MessageResponse("Error: No customer with this id for this user"));
+        }
 
         customer.setBalance(customerRequest.getBalance() != Double.MAX_VALUE ? customerRequest.getBalance() : customer.getBalance());
         customer.setFirstName(customerRequest.getFirstName() != null ? customerRequest.getFirstName() : customer.getFirstName());
@@ -96,7 +116,16 @@ public class CustomerController
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
                 .getPrincipal();
 
-        Customer customer = this.getCostumerById(id);
+        Customer customer;
+        try
+        {
+            customer = this.getCostumerById(id);
+        } catch (FileNotFoundException fileNotFoundException)
+        {
+            return ResponseEntity
+                    .badRequest()
+                    .body(new MessageResponse("Error: No customer with this id for this user"));
+        }
 
         customer.setBalance(customer.getBalance()+raise);
 
@@ -124,21 +153,39 @@ public class CustomerController
 
     @GetMapping(path = "/getById")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Customer> getAllCustomers(Authentication auth, @RequestParam(name = "id") long id) {
+    public ResponseEntity<?> getCustomerByID(Authentication auth, @RequestParam(name = "id") long id) {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
                 .getPrincipal();
 
-        return ResponseEntity.ok(this.getCostumerById(id));
+        Customer customer;
+        try
+        {
+            customer = this.getCostumerById(id);
+        } catch (FileNotFoundException fileNotFoundException)
+        {
+            return ResponseEntity
+                    .badRequest()
+                    .body(new MessageResponse("Error: No customer with this id for this user"));
+        }
+
+        return ResponseEntity.ok(customer);
     }
 
-    //findet User mit der Id des Users + den Customer aber nur wenn er dem User zugeordnet ist
-    public Customer getCostumerById(long id)
+    //findet Customer mit der Id des Users + den Customer aber nur wenn er dem User zugeordnet ist
+    public Customer getCostumerById(long id) throws FileNotFoundException
     {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
                 .getPrincipal();
 
+        User user = userRepository.findByUserID(userDetails.getUserID()).orElse(null);
+
+        if(!customerRepository.existsByCustomerIDAndUser(id, user))
+        {
+            throw new FileNotFoundException();
+        }
+
         return customerRepository.findByCustomerIDAndUser(id,
-                userRepository.findByUserID(userDetails.getUserID()).orElse(null))
+                user)
                 .orElse(null);
     }
 }

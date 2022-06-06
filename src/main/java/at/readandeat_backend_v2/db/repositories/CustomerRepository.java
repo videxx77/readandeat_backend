@@ -14,5 +14,6 @@ public interface CustomerRepository extends JpaRepository<Customer, Long>
 {
     Optional<Customer> findByCustomerIDAndUser(long customerID, User user);
     List<Customer> findCustomersByUser(User user);
-    boolean deleteByCustomerIDAndUser(long customerID, User user);
+
+    Boolean existsByCustomerIDAndUser(long customerID, User user);
 }

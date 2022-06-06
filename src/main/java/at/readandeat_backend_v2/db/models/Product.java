@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 
+//entity Klasse für Produkte (User legen ihre Produkte an)
 @Entity
 @Table(name = "Product")
 @Data
@@ -18,7 +19,7 @@ public class Product
     @Column(name = "ProductID")
     private long productID;
 
-    @Column(name = "name", nullable = false, length = 50)
+    @Column(name = "Name", nullable = false, length = 50)
     private String name;
 
     @Column(name = "Price", nullable = false)
@@ -30,4 +31,11 @@ public class Product
     @ManyToOne
     @JoinColumn(name = "AccountID", nullable = false)
     private User user;
+
+    public Product(String name, Double price, String pictureURL)
+    {
+        this.name = name;
+        this.price = price;
+        this.pictureURL = pictureURL;
+    }
 }
