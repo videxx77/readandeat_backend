@@ -1,7 +1,7 @@
 INSERT INTO
     account (Email, Username, First_Name, Last_Name, Password)
 VALUES
-       ('ramon@gmail.com', 'ramon', 'Ramon', 'Schuchlenz', '$2a$10$JXiWkoNl7.cEvlMpF7.ipO9Xp382HT.86om/IW4XU3kTQqhCynKZ.'),
+       ('ramon@gmail.com', 'ramon', 'Ramon', 'Schuchlenz', '$2a$10$XT0FmgTiBQTfxqe/ZSVQQeG.cLEwGP2sR9PdrWUqAiKYUn/m4mRi2'),
        ('simon@gmail.com', 'simon', 'Simon', 'Schönmaier', '$2a$10$1hWNSEtJJZhRS4XsXe1IAulEvOmJQVurXKYXAZQc811Dm1WQ6Bo1O');
 
 INSERT INTO
@@ -26,3 +26,9 @@ INSERT INTO
     `role` (Name)
 VALUES
        ('ROLE_USER');
+
+INSERT INTO
+    account_role (AccountID, RoleID)
+VALUES
+       (1, 1),
+       (2, 1);
