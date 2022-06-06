@@ -2,7 +2,7 @@ INSERT INTO
     account (Email, Username, First_Name, Last_Name, Password)
 VALUES
        ('ramon@gmail.com', 'ramon', 'Ramon', 'Schuchlenz', '$2a$10$XT0FmgTiBQTfxqe/ZSVQQeG.cLEwGP2sR9PdrWUqAiKYUn/m4mRi2'),
-       ('simon@gmail.com', 'simon', 'Simon', 'Schönmaier', '$2a$10$1hWNSEtJJZhRS4XsXe1IAulEvOmJQVurXKYXAZQc811Dm1WQ6Bo1O');
+       ('simon@gmail.com', 'simon', 'Simon', 'Schönmaier', '$2a$10$lyDwycpaR/Vx.Jvh4JBo2OLnex4IiIWGeD8f44tuEeI3ZIAfrIWEW');
 
 INSERT INTO
     customer (First_Name, Last_Name, Balance, PictureURL, AccountID)
