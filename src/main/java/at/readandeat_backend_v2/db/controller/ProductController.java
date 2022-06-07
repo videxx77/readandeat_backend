@@ -35,7 +35,7 @@ public class ProductController
 
     @PostMapping(path = "/add")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> addProduct(Authentication auth, @Valid @RequestBody ProductRequest productRequest) {
+    public ResponseEntity<?> addProduct(@Valid @RequestBody ProductRequest productRequest) {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
                 .getPrincipal();
 
@@ -55,7 +55,7 @@ public class ProductController
 
     @DeleteMapping(path = "/delete")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> deleteCustomer(Authentication auth, @RequestParam(name = "id") long id) {
+    public ResponseEntity<?> deleteCustomer(@RequestParam(name = "id") long id) {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
                 .getPrincipal();
 
@@ -80,7 +80,7 @@ public class ProductController
 
     @PatchMapping(path = "/update")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> updateCustomer(Authentication auth, @Valid @RequestBody ProductRequest productRequest, @RequestParam(name = "id") long id) {
+    public ResponseEntity<?> updateCustomer(@Valid @RequestBody ProductRequest productRequest, @RequestParam(name = "id") long id) {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
                 .getPrincipal();
 
@@ -109,7 +109,7 @@ public class ProductController
 
     @GetMapping(path = "/all")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<Product>> getAllProduct(Authentication auth)
+    public ResponseEntity<List<Product>> getAllProduct()
     {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
                 .getPrincipal();
@@ -121,7 +121,7 @@ public class ProductController
 
     @GetMapping(path = "/getById")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> getProductByID(Authentication auth, @RequestParam(name = "id") long id) {
+    public ResponseEntity<?> getProductByID(@RequestParam(name = "id") long id) {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
                 .getPrincipal();
 

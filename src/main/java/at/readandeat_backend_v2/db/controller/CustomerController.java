@@ -141,7 +141,7 @@ public class CustomerController
 
     @GetMapping(path = "/all")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<Customer>> getAllCustomers(Authentication auth) {
+    public ResponseEntity<List<Customer>> getAllCustomers() {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
                 .getPrincipal();
 
@@ -153,7 +153,7 @@ public class CustomerController
 
     @GetMapping(path = "/getById")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> getCustomerByID(Authentication auth, @RequestParam(name = "id") long id) {
+    public ResponseEntity<?> getCustomerByID(@RequestParam(name = "id") long id) {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
                 .getPrincipal();
 
