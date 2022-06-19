@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,8 +40,7 @@ public class CustomerController
     @PostMapping(path = "/add")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> addCustomer(@Valid @ModelAttribute CustomerRequest customerRequest) {
-        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
-                .getPrincipal();
+        UserDetailsImpl userDetails = getUserDeatailImpl();
 
         Customer customer = new Customer(
                 customerRequest.getFirstName(),
@@ -84,8 +84,7 @@ public class CustomerController
     @DeleteMapping(path = "/delete")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> deleteCustomer(@RequestParam(name = "id") long id) {
-        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
-                .getPrincipal();
+        UserDetailsImpl userDetails = getUserDeatailImpl();
 
         Customer customer;
         try
@@ -98,6 +97,11 @@ public class CustomerController
                     .body(new MessageResponse("Error: No customer with this id for this user"));
         }
 
+        String filepath = "/customer-photos/" + userDetails.getUserID() + "/" +
+                customer.getPictureURL().split("/")[3];
+        File f= new File("src/main/resources/" + filepath);
+        f.delete();
+
         customerRepository.delete(customer);
 
         return ResponseEntity.ok(new MessageResponse("Customer "+
@@ -109,9 +113,8 @@ public class CustomerController
 
     @PatchMapping(path = "/update")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> updateCustomer(@Valid @RequestBody CustomerRequest customerRequest, @RequestParam(name = "id") long id) {
-        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
-                .getPrincipal();
+    public ResponseEntity<?> updateCustomer(@Valid @ModelAttribute CustomerRequest customerRequest, @RequestParam(name = "id") long id) {
+        UserDetailsImpl userDetails = getUserDeatailImpl();
 
         Customer customer;
         try
@@ -128,6 +131,38 @@ public class CustomerController
         customer.setFirstName(customerRequest.getFirstName() != null ? customerRequest.getFirstName() : customer.getFirstName());
         customer.setLastName(customerRequest.getLastName() != null ? customerRequest.getLastName() : customer.getLastName());
 
+        if(customerRequest.getImage() != null)
+        {
+            //file upload
+            MultipartFile image = customerRequest.getImage();
+            String fileName = customer.getCustomerID() + "." + image.getOriginalFilename().split("\\.")[1];
+            String uploadDir = "customer-photos/"+ userDetails.getUserID();
+            String apiDir = "customer/" + uploadDir;
+            uploadDir = "src/main/resources/" + uploadDir;
+            try
+            {
+                FileUploadUtil.saveFile(uploadDir, fileName, image);
+
+                String filepath = "/customer-photos/" + userDetails.getUserID() + "/" +
+                        customer.getPictureURL().split("/")[3];
+                File f = new File("src/main/resources/" + filepath);
+                f.delete();
+
+            } catch (IOException e)
+            {
+                return ResponseEntity.internalServerError().body(new MessageResponse("File upload didnt work!"));
+            }
+
+
+
+            customer.setPictureURL(apiDir + "/" + fileName);
+
+        }
+        else
+        {
+            customer.setPictureURL(null);
+        }
+
         customerRepository.save(customer);
 
         return ResponseEntity.ok(new MessageResponse("Customer "+
@@ -140,8 +175,7 @@ public class CustomerController
     @PatchMapping(path = "/raiseFounds")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> raiseFounds(@RequestParam(name = "id") long id, @RequestParam(name = "raise") double raise) {
-        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
-                .getPrincipal();
+        UserDetailsImpl userDetails = getUserDeatailImpl();
 
         Customer customer;
         try
@@ -169,8 +203,7 @@ public class CustomerController
     @GetMapping(path = "/all")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<Customer>> getAllCustomers() {
-        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
-                .getPrincipal();
+        UserDetailsImpl userDetails = getUserDeatailImpl();
 
         //sucht nach allen customers die dem User der gerade eingeloggt ist zugewiesen sind
         List<Customer> customerList = customerRepository.findCustomersByUser(userRepository.findByUserID(userDetails.getUserID()).orElse(null));
@@ -202,8 +235,7 @@ public class CustomerController
     @PreAuthorize("hasRole('USER')")
     public @ResponseBody ResponseEntity<?> getImage(@PathVariable(name = "user") long userId, @PathVariable(name = "image") String image)
     {
-        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
-                .getPrincipal();
+        UserDetailsImpl userDetails = getUserDeatailImpl();
 
         String filepath = "/customer-photos/" + userDetails.getUserID() + "/" + image;
 
@@ -228,13 +260,13 @@ public class CustomerController
             );
         }
     }
-        /**
+
+    /**
      *  findet Customer mit der Id des Users + den Customer aber nur wenn er dem User zugeordnet ist
      */
     public Customer getCostumerById(long id) throws FileNotFoundException
     {
-        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
-                .getPrincipal();
+        UserDetailsImpl userDetails = getUserDeatailImpl();
 
         User user = userRepository.findByUserID(userDetails.getUserID()).orElse(null);
 
@@ -246,5 +278,10 @@ public class CustomerController
         return customerRepository.findByCustomerIDAndUser(id,
                 user)
                 .orElse(null);
+    }
+
+    public UserDetailsImpl getUserDeatailImpl ()
+    {
+        return (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 }

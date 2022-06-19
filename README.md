@@ -6,16 +6,16 @@ NO PRODUCTION RELEASE
 ### Implemented
 - Auth (signup/signin) API working
 - JWT working
-- Custome API working (without picture upload)
+- Customer API working (without picture upload)
 - Product API working (without picture upload)
 
 ### Missing
 - picture upload
-- bette exception messages
+- better exception messages
 - response with message and http status 
 - https
 
-## Steps for no production setup
+## Steps for no production setuprec
 1. set up database (MySql) without creating tables
 2. change creadentials in src\main\resources\application.properties
 3. in application.properties change spring.jpa.hibernate.ddl-auto=update to spring.jpa.hibernate.ddl-auto=create
