@@ -1,24 +1,28 @@
 package at.readandeat_backend_v2.db.controller;
 
+import at.readandeat_backend_v2.db.fileupload.FileUploadUtil;
 import at.readandeat_backend_v2.db.models.Customer;
-import at.readandeat_backend_v2.db.models.Product;
 import at.readandeat_backend_v2.db.models.User;
 import at.readandeat_backend_v2.db.payload.request.CustomerRequest;
-import at.readandeat_backend_v2.db.payload.request.SignupRequest;
 import at.readandeat_backend_v2.db.payload.response.MessageResponse;
 import at.readandeat_backend_v2.db.repositories.CustomerRepository;
 import at.readandeat_backend_v2.db.repositories.UserRepository;
 import at.readandeat_backend_v2.db.security.services.UserDetailsImpl;
-import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
-import javax.persistence.PostUpdate;
 import javax.validation.Valid;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -34,20 +38,44 @@ public class CustomerController
 
     @PostMapping(path = "/add")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> addCustomer(Authentication auth, @Valid @RequestBody CustomerRequest customerRequest) {
+    public ResponseEntity<?> addCustomer(@Valid @ModelAttribute CustomerRequest customerRequest) {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
                 .getPrincipal();
 
         Customer customer = new Customer(
                 customerRequest.getFirstName(),
                 customerRequest.getLastName(),
-                customerRequest.getBalance(),
-                customerRequest.getPictureURL()
+                customerRequest.getBalance()
         );
 
         //ordnet den eingeloggten User dem neuen Customer zu
         customer.setUser(userRepository.findByUserID(userDetails.getUserID()).orElse(null));
+        customerRepository.save(customer);
 
+        if(customerRequest.getImage() != null)
+        {
+            //file upload
+            MultipartFile image = customerRequest.getImage();
+            String fileName = customer.getCustomerID() + "." + image.getOriginalFilename().split("\\.")[1];
+            String uploadDir = "customer-photos/"+ userDetails.getUserID();
+            String apiDir = "customer/" + uploadDir;
+            uploadDir = "src/main/resources/" + uploadDir;
+            try
+            {
+                FileUploadUtil.saveFile(uploadDir, fileName, image);
+
+            } catch (IOException e)
+            {
+                return ResponseEntity.internalServerError().body(new MessageResponse("File upload didnt work!"));
+            }
+
+            customer.setPictureURL(apiDir + "/" + fileName);
+
+        }
+        else
+        {
+            customer.setPictureURL(null);
+        }
         customerRepository.save(customer);
 
         return ResponseEntity.ok(new MessageResponse("Customer registered successfully!"));
@@ -55,7 +83,7 @@ public class CustomerController
 
     @DeleteMapping(path = "/delete")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> deleteCustomer(Authentication auth, @RequestParam(name = "id") long id) {
+    public ResponseEntity<?> deleteCustomer(@RequestParam(name = "id") long id) {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
                 .getPrincipal();
 
@@ -81,7 +109,7 @@ public class CustomerController
 
     @PatchMapping(path = "/update")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> updateCustomer(Authentication auth, @Valid @RequestBody CustomerRequest customerRequest, @RequestParam(name = "id") long id) {
+    public ResponseEntity<?> updateCustomer(@Valid @RequestBody CustomerRequest customerRequest, @RequestParam(name = "id") long id) {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
                 .getPrincipal();
 
@@ -99,7 +127,6 @@ public class CustomerController
         customer.setBalance(customerRequest.getBalance() != Double.MAX_VALUE ? customerRequest.getBalance() : customer.getBalance());
         customer.setFirstName(customerRequest.getFirstName() != null ? customerRequest.getFirstName() : customer.getFirstName());
         customer.setLastName(customerRequest.getLastName() != null ? customerRequest.getLastName() : customer.getLastName());
-        customer.setPictureURL(customerRequest.getPictureURL() != null ? customerRequest.getPictureURL() : customer.getPictureURL());
 
         customerRepository.save(customer);
 
@@ -112,7 +139,7 @@ public class CustomerController
 
     @PatchMapping(path = "/raiseFounds")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> raiseFounds(Authentication auth, @RequestParam(name = "id") long id, @RequestParam(name = "raise") double raise) {
+    public ResponseEntity<?> raiseFounds(@RequestParam(name = "id") long id, @RequestParam(name = "raise") double raise) {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
                 .getPrincipal();
 
@@ -154,9 +181,6 @@ public class CustomerController
     @GetMapping(path = "/getById")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> getCustomerByID(@RequestParam(name = "id") long id) {
-        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
-                .getPrincipal();
-
         Customer customer;
         try
         {
@@ -171,7 +195,42 @@ public class CustomerController
         return ResponseEntity.ok(customer);
     }
 
-    //findet Customer mit der Id des Users + den Customer aber nur wenn er dem User zugeordnet ist
+    @GetMapping(
+            path = "/customer-photos/{user}/{image}",
+            produces = MediaType.IMAGE_JPEG_VALUE
+    )
+    @PreAuthorize("hasRole('USER')")
+    public @ResponseBody ResponseEntity<?> getImage(@PathVariable(name = "user") long userId, @PathVariable(name = "image") String image)
+    {
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
+                .getPrincipal();
+
+        String filepath = "/customer-photos/" + userDetails.getUserID() + "/" + image;
+
+
+        InputStream in = getClass()
+                .getResourceAsStream(filepath);
+        if(in == null)
+        {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "File with path "+filepath+" not found"
+            );
+        }
+
+        try
+        {
+            byte[] out = IOUtils.toByteArray(in);
+            return ResponseEntity.ok(out);
+        } catch (IOException e)
+        {
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Ops something went wrong"
+            );
+        }
+    }
+        /**
+     *  findet Customer mit der Id des Users + den Customer aber nur wenn er dem User zugeordnet ist
+     */
     public Customer getCostumerById(long id) throws FileNotFoundException
     {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()

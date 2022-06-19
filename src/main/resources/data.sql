@@ -7,7 +7,7 @@ VALUES
 INSERT INTO
     customer (First_Name, Last_Name, Balance, PictureURL, AccountID)
 VALUES
-       ('Heinz', 'Schiffermüller', 1.00, NULL, 1),
+       ('Heinz', 'Schiffermüller', 1.00, "customer/customer-photos/1/1.jpg", 1),
        ('Paul', 'Temmel', 5.00, NULL, 1),
        ('Simon', 'Terodde', 420.0, NULL, 2),
        ('Thomas', 'Ouwejan', 69.00, NULL, 2);

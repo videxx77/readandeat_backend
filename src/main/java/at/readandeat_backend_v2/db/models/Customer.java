@@ -38,11 +38,11 @@ public class Customer
     @JoinColumn(name = "AccountID", nullable = false)
     private User user;
 
-    public Customer(String firstName, String lastName, Double balance, String pictureURL)
+    public Customer(String firstName, String lastName, Double balance)
     {
         this.firstName = firstName;
         this.lastName = lastName;
         this.balance = balance;
-        this.pictureURL = pictureURL;
     }
+
 }
