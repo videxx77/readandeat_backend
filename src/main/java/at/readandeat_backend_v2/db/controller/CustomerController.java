@@ -127,7 +127,6 @@ public class CustomerController
                     .body(new MessageResponse("Error: No customer with this id for this user"));
         }
 
-        customer.setBalance(customerRequest.getBalance() != Double.MAX_VALUE ? customerRequest.getBalance() : customer.getBalance());
         customer.setFirstName(customerRequest.getFirstName() != null ? customerRequest.getFirstName() : customer.getFirstName());
         customer.setLastName(customerRequest.getLastName() != null ? customerRequest.getLastName() : customer.getLastName());
 
@@ -160,7 +159,7 @@ public class CustomerController
         }
         else
         {
-            customer.setPictureURL(null);
+            //picture url gleich lassen
         }
 
         customerRepository.save(customer);
