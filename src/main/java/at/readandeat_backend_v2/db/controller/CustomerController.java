@@ -73,7 +73,7 @@ public class CustomerController
 
             customer.setPictureURL(apiDir + "/" + fileName);
 
-        }catch (ArrayIndexOutOfBoundsException e)
+        }catch (ArrayIndexOutOfBoundsException | NullPointerException e)
         {
             customer.setPictureURL(null);
         }
