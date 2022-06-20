@@ -52,7 +52,9 @@ public class CustomerController
         customer.setUser(userRepository.findByUserID(userDetails.getUserID()).orElse(null));
         customerRepository.save(customer);
 
-        if(customerRequest.getImage() != null)
+        System.out.println(customerRequest.getImage());
+
+        try
         {
             //file upload
             MultipartFile image = customerRequest.getImage();
@@ -71,8 +73,7 @@ public class CustomerController
 
             customer.setPictureURL(apiDir + "/" + fileName);
 
-        }
-        else
+        }catch (ArrayIndexOutOfBoundsException e)
         {
             customer.setPictureURL(null);
         }
