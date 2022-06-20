@@ -1,5 +1,8 @@
 # readandeat_backend
 
+## API documentation
+[Documentation](https://documenter.getpostman.com/view/18382989/UzBmMn16)
+
 ## Release Notes v0.1
 NO PRODUCTION RELEASE
 
@@ -15,7 +18,7 @@ NO PRODUCTION RELEASE
 - response with message and http status 
 - https
 
-## Steps for no production setuprec
+## Steps for no production setup
 1. set up database (MySql) without creating tables
 2. change creadentials in src\main\resources\application.properties
 3. in application.properties change spring.jpa.hibernate.ddl-auto=update to spring.jpa.hibernate.ddl-auto=create
