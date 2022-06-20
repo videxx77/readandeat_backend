@@ -97,10 +97,21 @@ public class CustomerController
                     .body(new MessageResponse("Error: No customer with this id for this user"));
         }
 
-        String filepath = "/customer-photos/" + userDetails.getUserID() + "/" +
-                customer.getPictureURL().split("/")[3];
-        File f= new File("src/main/resources/" + filepath);
-        f.delete();
+        try
+        {
+            String filepath = "/customer-photos/" + userDetails.getUserID() + "/" +
+                    customer.getPictureURL().split("/")[3];
+            File f= new File("src/main/resources/" + filepath);
+            f.delete();
+        } catch (Exception e)
+        {
+            return ResponseEntity.ok(new MessageResponse("Customer "+
+                    customer.getFirstName() +
+                    " " +
+                    customer.getLastName() +
+                    " was deleted successfully but no picture was found!"));
+        }
+
 
         customerRepository.delete(customer);
 
