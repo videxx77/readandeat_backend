@@ -106,6 +106,7 @@ public class CustomerController
             f.delete();
         } catch (Exception e)
         {
+            customerRepository.delete(customer);
             return ResponseEntity.ok(new MessageResponse("Customer "+
                     customer.getFirstName() +
                     " " +
